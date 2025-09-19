@@ -1,0 +1,70 @@
+#include <Arduino.h>
+#include <SoftPWM.h>   // Install "SoftPWM" library
+
+// Pin definitions
+#define TEMP_PIN A0    // NTC sensor connected here
+#define FAN_PIN  13    // Fan simulated with LED on pin 13
+
+// (10k NTC, 10k series resistor)
+const float SERIES_RESISTOR = 10000.0;      // 10k fixed resistor
+const float NOMINAL_RESISTANCE = 10000.0;   // NTC resistance at 25°C
+const float NOMINAL_TEMPERATURE = 25.0;     // Reference temperature (°C)
+const float B_COEFFICIENT = 3950.0;         // Beta value from NTC datasheet
+const int ADC_MAX = 1023;
+
+void setup() {
+  Serial.begin(9600);
+
+  // Initialize SoftPWM
+  SoftPWMBegin();
+  SoftPWMSet(FAN_PIN, 0);     // Start with 0% duty cycle
+  SoftPWMSetFadeTime(FAN_PIN, 0, 0); 
+}
+
+float readTemperature() {
+  int adcValue = analogRead(TEMP_PIN);
+
+  // Convert ADC to resistance
+  float resistance = SERIES_RESISTOR * ((float)ADC_MAX / adcValue - 1.0);
+
+  // Steinhart equation
+  float steinhart;
+  steinhart = resistance / NOMINAL_RESISTANCE;   
+  steinhart = log(steinhart);                    
+  steinhart /= B_COEFFICIENT;                    
+  steinhart += 1.0 / (NOMINAL_TEMPERATURE + 273.15); 
+  steinhart = 1.0 / steinhart;                   
+  steinhart -= 273.15;                           
+
+  return steinhart;
+}
+
+void loop() {
+  float temperature = readTemperature();
+  int dutyPercent = 0;  
+  String fanState = "OFF";
+
+  if (temperature < 25.0) {
+    dutyPercent = 0;
+    fanState = "OFF";
+  } 
+  else if (temperature >= 25.0 && temperature < 30.0) {
+    dutyPercent = 50;   // ~50% PWM
+    fanState = "50% SPEED";
+  } 
+  else {
+    dutyPercent = 100;  // 100% PWM
+    fanState = "100% SPEED";
+  }
+
+  // Apply PWM on pin 13
+  SoftPWMSet(FAN_PIN, dutyPercent);
+
+  // Print live data
+  Serial.print("Temperature: ");
+  Serial.print(temperature);
+  Serial.print(" °C | Fan: ");
+  Serial.println(fanState);
+
+  delay(1000); // update every 1 second
+}
