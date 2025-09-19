@@ -2,12 +2,12 @@
 #include <SoftPWM.h>   // Install "SoftPWM" library
 
 // Pin definitions
-#define TEMP_PIN A0    // NTC sensor connected here
-#define FAN_PIN  13    // Fan simulated with LED on pin 13
+#define TEMP_PIN A0    // NTC sensor
+#define FAN_PIN  13    // Fan with LED on pin 13
 
 // (10k NTC, 10k series resistor)
 const float SERIES_RESISTOR = 10000.0;      // 10k fixed resistor
-const float NOMINAL_RESISTANCE = 10000.0;   // NTC resistance at 25°C
+const float NOMINAL_RESISTANCE = 298000.0;   // NTC resistance at 25°C from datasheet
 const float NOMINAL_TEMPERATURE = 25.0;     // Reference temperature (°C)
 const float B_COEFFICIENT = 3950.0;         // Beta value from NTC datasheet
 const int ADC_MAX = 1023;
